@@ -129,6 +129,7 @@ def _blocked_median_mad(x: np.ndarray, block: int = 4096) -> Tuple[np.ndarray, n
 def detect_preambles(mag: np.ndarray, fs: float, min_snr: float = 6.0, up: int = 1,
                      use_block_stats: bool = True, block: int = 4096) -> List[Detection]:
     tpl = _preamble_template(fs)
+    tpl_len = len(tpl) ## CLAYTON FIX
     corr = np.convolve(mag, tpl[::-1], mode='same')
 
     if use_block_stats:
@@ -148,15 +149,20 @@ def detect_preambles(mag: np.ndarray, fs: float, min_snr: float = 6.0, up: int =
 
     # NMS within ~4us
     guard = int(round(4e-6*fs))
-    kept = []
+    kept_centers = []
     last = -10**9
     for p in idx:
-        if not kept or p - last > guard:
-            kept.append(p); last = p
+        if not kept_centers or p - last > guard:
+            kept_centers.append(p); last = p
         elif c[p] > c[last]:
-            kept[-1] = p; last = p
+            kept_centers[-1] = p; last = p
 
-    return [Detection(p0=int(p), score=float(c[p]), fs=fs, up=up) for p in kept]
+    ## CLAYTON FIX:
+    # Convert the detected *center* indices to preamble *start* indices
+    kept_starts = [max(0, int(p - (tpl_len // 2))) for p in kept_centers]
+
+    return [Detection(p0=int(s), score=float(c[p]), fs=fs, up=up) for s, p in zip(kept_starts, kept_centers)]
+
 
 # -------------------- Bit slicing & helpers --------------------
 
