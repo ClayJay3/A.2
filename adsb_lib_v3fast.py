@@ -163,7 +163,6 @@ def detect_preambles(mag: np.ndarray, fs: float, min_snr: float = 6.0, up: int =
 
     return [Detection(p0=int(s), score=float(c[p]), fs=fs, up=up) for s, p in zip(kept_starts, kept_centers)]
 
-
 # -------------------- Bit slicing & helpers --------------------
 
 def slice_ppm_bits(mag: np.ndarray, fs: float, payload_bits: int, start_index: int) -> np.ndarray:
